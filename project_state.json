@@ -1,0 +1,31 @@
+{
+  "tasks": [
+    "Survey land",
+    "Obtain permits",
+    "Clear site",
+    "Level ground",
+    "Arrange materials",
+    "Pour foundation",
+    "Quality inspection"
+  ],
+  "completed": {
+    "Survey land": true,
+    "Obtain permits": false,
+    "Clear site": false,
+    "Level ground": false,
+    "Arrange materials": false,
+    "Pour foundation": false,
+    "Quality inspection": false,
+    "TASK_NAME Obtain": false,
+    "'Survey land'": true
+  },
+  "project_active": true,
+  "start_date": "2026-02-20",
+  "resources": {
+    "workers": 10,
+    "cement": 497,
+    "excavator": 0,
+    "steel": 20,
+    "budget": 890000
+  }
+}
