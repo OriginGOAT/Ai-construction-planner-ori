@@ -1,57 +1,62 @@
-from groq import Groq
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+API_KEY = os.getenv("GROQ_API_KEY")
 
 def run_agent(
     user_input,
     location=None,
     project_type=None,
     soil=None,
-    workers=0,
-    cement=0,
-    excavator=0,
-    steel=0,
-    budget=0
+    resources=None
 ):
 
-    context = f"""
-You are an AI Construction Planning Agent.
+    resources = resources or {}
 
-Project Details:
+    prompt = f"""
+You are a Senior Construction Planning AI Agent.
+
+Project Context:
 Location: {location}
 Structure Type: {project_type}
 Soil Type: {soil}
+Resources: {resources}
 
-Resources:
-Workers: {workers}
-Cement: {cement}
-Excavator: {excavator}
-Steel: {steel}
-Budget: {budget}
+User Request:
+{user_input}
 
-You MUST:
+Generate:
 
-1. Break construction into optimized workflow tasks
-2. Check resource shortages
-3. Suggest execution schedule
-4. Identify realistic risks
-5. Suggest next actionable step
-6. Adapt plan based on soil and location
-7. Output clean formatted response
-
-Respond like an industry planning assistant.
+Project Overview
+Optimized Workflow
+Execution Schedule
+Resource Constraints
+Identified Risks
+Mitigation Plan
 """
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role":"system","content":context},
-            {"role":"user","content":user_input}
-        ]
-    )
+    url = "https://api.groq.com/openai/v1/chat/completions"
 
-    return response.choices[0].message.content
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": "You are an expert construction planner."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code != 200:
+        return f"Groq API Error: {response.text}"
+
+    return response.json()["choices"][0]["message"]["content"]

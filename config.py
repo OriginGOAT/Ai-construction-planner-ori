@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 
+# load values from .env file
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("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")
+# read API key from environment variable
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
