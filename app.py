@@ -48,18 +48,18 @@ if user_input:
     with st.chat_message("assistant"):
 
         reply = run_agent(
-    user_input,
+    user_input=user_input,
     location=st.session_state.get("location"),
     project_type=st.session_state.get("project_type"),
     soil=st.session_state.get("soil"),
-    resources={
-        "workers":st.session_state.get("workers"),
-        "cement":st.session_state.get("cement"),
-        "excavators":st.session_state.get("excavators"),
-        "steel":st.session_state.get("steel"),
-        "budget":st.session_state.get("budget")
-    }
+
+    workers=st.session_state.get("workers",0),
+    cement=st.session_state.get("cement",0),
+    excavators=st.session_state.get("excavators",0),
+    steel=st.session_state.get("steel",0),
+    budget=st.session_state.get("budget",0)
 )
+
 
 
         st.markdown(reply)

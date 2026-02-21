@@ -1,62 +1,100 @@
+from groq import Groq
 import os
-import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY not found in environment variables")
+
+client = Groq(api_key=GROQ_API_KEY)
+
 
 def run_agent(
     user_input,
     location=None,
     project_type=None,
     soil=None,
-    resources=None
+    workers=0,
+    cement=0,
+    excavators=0,
+    steel=0,
+    budget=0
 ):
 
-    resources = resources or {}
+    system_prompt = f"""
+You are an AI Construction Planning Agent used by civil engineers and project managers.
 
-    prompt = f"""
-You are a Senior Construction Planning AI Agent.
+You must generate:
 
-Project Context:
-Location: {location}
-Structure Type: {project_type}
+1. Optimized Construction Workflow
+2. Execution Schedule
+3. Resource Constraint Check
+4. Risk Identification
+5. Mitigation Suggestions
+
+Consider:
+
+Project Location: {location}
+Project Type: {project_type}
 Soil Type: {soil}
-Resources: {resources}
 
+Available Resources:
+Workers: {workers}
+Cement: {cement}
+Excavators: {excavators}
+Steel: {steel}
+Budget: {budget}
+
+Think like a real project planner.
+
+Output strictly in this format:
+
+PROJECT OVERVIEW
+---------------
+Location:
+Structure:
+Soil Stability:
+Weather Risk:
+
+OPTIMIZED WORKFLOW
+------------------
+
+EXECUTION SCHEDULE
+------------------
+
+RESOURCE CONSTRAINTS
+------------------
+
+IDENTIFIED RISKS
+------------------
+
+MITIGATION PLAN
+------------------
+"""
+
+    user_prompt = f"""
 User Request:
 {user_input}
 
-Generate:
-
-Project Overview
-Optimized Workflow
-Execution Schedule
-Resource Constraints
-Identified Risks
-Mitigation Plan
+Generate the full project planning response.
 """
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
+    try:
 
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.4,
+            max_tokens=1200
+        )
 
-    data = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [
-            {"role": "system", "content": "You are an expert construction planner."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.3
-    }
+        return response.choices[0].message.content
 
-    response = requests.post(url, headers=headers, json=data)
-
-    if response.status_code != 200:
-        return f"Groq API Error: {response.text}"
-
-    return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"Groq API Error: {str(e)}"
