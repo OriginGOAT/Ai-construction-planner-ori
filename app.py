@@ -1,3 +1,5 @@
+from backend.memory import SessionMemory
+mem = SessionMemory()
 import streamlit as st
 from backend.simple_agent import run_agent
 
@@ -48,17 +50,21 @@ if user_input:
     with st.chat_message("assistant"):
 
         reply = run_agent(
-            user_input,
-            location=st.session_state.location,
-            project_type=st.session_state.project_type,
-            soil=st.session_state.soil,
-            workers=st.session_state.workers,
-            cement=st.session_state.cement,
-            excavator=st.session_state.excavator,
-            steel=st.session_state.steel,
-            budget=st.session_state.budget
-        )
+    user_input=user_input,
+    location=st.session_state.get("location"),
+    project_type=st.session_state.get("project_type"),
+    soil=st.session_state.get("soil"),
+
+    workers=st.session_state.get("workers",0),
+    cement=st.session_state.get("cement",0),
+    excavators=st.session_state.get("excavators",0),
+    steel=st.session_state.get("steel",0),
+    budget=st.session_state.get("budget",0)
+)
+
 
         st.markdown(reply)
 
     st.session_state.chat.append({"role":"assistant","content":reply})
+if st.session_state.get("logout"):
+    mem.clear()
