@@ -1,3 +1,5 @@
+from backend.memory import SessionMemory
+mem = SessionMemory()
 import streamlit as st
 from backend.simple_agent import run_agent
 
@@ -61,7 +63,8 @@ if user_input:
 )
 
 
-
         st.markdown(reply)
 
     st.session_state.chat.append({"role":"assistant","content":reply})
+if st.session_state.get("logout"):
+    mem.clear()

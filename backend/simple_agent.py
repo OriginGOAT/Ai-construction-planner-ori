@@ -1,15 +1,14 @@
 from groq import Groq
 import os
 from dotenv import load_dotenv
+from backend.memory import SessionMemory
 
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY not found in environment variables")
-
 client = Groq(api_key=GROQ_API_KEY)
+memory = SessionMemory()
 
 
 def run_agent(
@@ -24,62 +23,42 @@ def run_agent(
     budget=0
 ):
 
-    system_prompt = f"""
-You are an AI Construction Planning Agent used by civil engineers and project managers.
+    mem = memory.get_memory()
 
-You must generate:
+    project_data = {
+        "location":location,
+        "structure":project_type,
+        "soil":soil,
+        "workers":workers,
+        "cement":cement,
+        "excavators":excavators,
+        "steel":steel,
+        "budget":budget
+    }
 
-1. Optimized Construction Workflow
-2. Execution Schedule
-3. Resource Constraint Check
-4. Risk Identification
-5. Mitigation Suggestions
+    memory.update_project(project_data)
 
-Consider:
-
-Project Location: {location}
-Project Type: {project_type}
-Soil Type: {soil}
-
-Available Resources:
-Workers: {workers}
-Cement: {cement}
-Excavators: {excavators}
-Steel: {steel}
-Budget: {budget}
-
-Think like a real project planner.
-
-Output strictly in this format:
-
-PROJECT OVERVIEW
----------------
-Location:
-Structure:
-Soil Stability:
-Weather Risk:
-
-OPTIMIZED WORKFLOW
-------------------
-
-EXECUTION SCHEDULE
-------------------
-
-RESOURCE CONSTRAINTS
-------------------
-
-IDENTIFIED RISKS
-------------------
-
-MITIGATION PLAN
-------------------
+    context = f"""
+Previous Project Info: {mem['project']}
+Conversation History: {mem['history']}
 """
 
-    user_prompt = f"""
-User Request:
-{user_input}
+    system_prompt = f"""
+You are a Professional Construction Planning AI Agent.
 
-Generate the full project planning response.
+Use previous memory to refine planning decisions.
+
+Memory Context:
+{context}
+
+Generate:
+
+PROJECT OVERVIEW
+OPTIMIZED WORKFLOW
+EXECUTION SCHEDULE
+RESOURCE CONSTRAINTS
+IDENTIFIED RISKS
+MITIGATION PLAN
 """
 
     try:
@@ -87,14 +66,18 @@ Generate the full project planning response.
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role":"system","content":system_prompt},
+                {"role":"user","content":user_input}
             ],
             temperature=0.4,
             max_tokens=1200
         )
 
-        return response.choices[0].message.content
+        reply = response.choices[0].message.content
+
+        memory.update_history(user_input,reply)
+
+        return reply
 
     except Exception as e:
         return f"Groq API Error: {str(e)}"
